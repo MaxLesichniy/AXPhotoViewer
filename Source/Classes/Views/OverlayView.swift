@@ -37,6 +37,8 @@ import UIKit
         }
     }
     
+    @objc public var playbackView: PlaybackControlsView = PlaybackControlsView()
+    
     /// The title view displayed in the toolbar. This view is sized and centered between the `leftBarButtonItems` and `rightBarButtonItems`.
     /// This is prioritized over `title`.
     @objc public var titleView: OverlayTitleViewProtocol? {
@@ -181,6 +183,9 @@ import UIKit
         NotificationCenter.default.addObserver(forName: .UIContentSizeCategoryDidChange, object: nil, queue: .main) { [weak self] (note) in
             self?.setNeedsLayout()
         }
+        
+//        setShowPlaybackControls(true)
+        
     }
     
     public required init?(coder aDecoder: NSCoder) {
@@ -283,6 +288,16 @@ import UIKit
         }
     }
     
+    func setShowPlaybackControls(_ show: Bool) {
+        UIView.animate(withDuration: 0.25, delay: 0, options: [.layoutSubviews], animations: {
+            if show {
+                self.bottomStackContainer.insertSubview(self.playbackView, at: 0)
+            } else {
+                self.playbackView.removeFromSuperview()
+            }
+        }, completion: nil)
+    }
+    
     // MARK: - UIToolbar convenience
     func updateToolbarBarButtonItems() {
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
@@ -370,6 +385,7 @@ import UIKit
             }
         }
     }
+
     
     // MARK: - CaptionViewProtocol
     func updateCaptionView(photo: PhotoProtocol) {

@@ -8,6 +8,7 @@
 
 import UIKit
 import FLAnimatedImage
+import AVFoundation
 
 fileprivate let ZoomScaleEpsilon: CGFloat = 0.01
 
@@ -63,6 +64,8 @@ fileprivate let ZoomScaleEpsilon: CGFloat = 0.01
         self.bouncesZoom = true
         self.decelerationRate = UIScrollViewDecelerationRateFast;
         self.delegate = self
+        
+        
     }
     
     required init?(coder aDecoder: NSCoder) {

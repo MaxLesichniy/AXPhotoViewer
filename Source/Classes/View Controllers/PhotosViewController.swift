@@ -8,6 +8,7 @@
 
 import UIKit
 import MobileCoreServices
+import CoreMedia
 
 @objc(AXPhotosViewController) open class PhotosViewController: UIViewController, UIPageViewControllerDelegate, UIPageViewControllerDataSource,
                                                                UIViewControllerTransitioningDelegate, PhotoViewControllerDelegate, NetworkIntegrationDelegate,
@@ -344,6 +345,7 @@ import MobileCoreServices
         self.overlayView.rightBarButtonItem = actionBarButtonItem
         
         self.overlayView.setShowInterface(false, animated: false)
+        self.overlayView.playbackView.delegate = self
     }
     
     deinit {
@@ -520,6 +522,8 @@ import MobileCoreServices
         }
         
         self.overlayView.updateCaptionView(photo: photo)
+        
+        self.overlayView.setShowPlaybackControls(photo.type == .video)
     }
     
     fileprivate func updateOverlayInsets() {
@@ -668,6 +672,8 @@ import MobileCoreServices
             photoViewController = PhotoViewController(loadingView: loadingView, notificationCenter: self.notificationCenter)
             photoViewController.addLifecycleObserver(self)
             photoViewController.delegate = self
+            photoViewController.player.playerDelegate = self
+            photoViewController.player.playbackDelegate = self
             
             self.singleTapGestureRecognizer.require(toFail: photoViewController.zoomingImageView.doubleTapGestureRecognizer)
         }
@@ -1039,6 +1045,74 @@ import MobileCoreServices
 
 }
 
+// MARK: - PlaybackControlsView Delegate
+extension PhotosViewController: PlaybackControlsViewDelegate {
+    
+    public func playbackControls(_ view: PlaybackControlsView, didSeek to: TimeInterval) {
+        let player = self.currentPhotoViewController?.player
+        let time = CMTimeMakeWithSeconds(to, 60)
+        player?.seek(to: time)
+    }
+    
+    public func playbackControls(_ view: PlaybackControlsView, perform action: PlaybackControlsView.Action) {
+        let player = self.currentPhotoViewController?.player
+        switch action {
+        case .play:
+            if player?.currentTime == player?.maximumDuration {
+                player?.playFromBeginning()
+            } else {
+                player?.playFromCurrentTime()
+            }
+        case .pause:
+            player?.pause()
+            break
+        }
+    }
+    
+}
+
+// MARK: - PlayerPlaybackDelegate
+extension PhotosViewController: PlayerPlaybackDelegate {
+    
+    public func playerCurrentTimeDidChange(_ player: Player) {
+        overlayView.playbackView.updateCurrentTime(player.currentTime, totalTime: player.maximumDuration)
+    }
+    
+    public func playerPlaybackWillStartFromBeginning(_ player: Player) {
+        
+    }
+    
+    public func playerPlaybackDidEnd(_ player: Player) {
+        
+    }
+    
+    public func playerPlaybackWillLoop(_ player: Player) {
+        
+    }
+}
+
+// MARK: - PlayerDelegate
+extension PhotosViewController: PlayerDelegate {
+    
+    public func playerReady(_ player: Player) {
+        
+    }
+    
+    public func playerPlaybackStateDidChange(_ player: Player) {
+        DispatchQueue.main.async {
+            self.overlayView.playbackView.isPlaying = player.playbackState == .playing
+        }
+    }
+    
+    public func playerBufferingStateDidChange(_ player: Player) {
+        
+    }
+    
+    public func playerBufferTimeDidChange(_ bufferTime: Double) {
+        
+    }
+}
+
 // MARK: - Convenience extensions
 fileprivate var PhotoViewControllerLifecycleContext: UInt8 = 0
 fileprivate extension Array where Element: UIViewController {
@@ -1174,3 +1248,5 @@ public extension Notification.Name {
     static let photoLoadingProgressUpdate = Notification.Name("AXPhotoLoadingProgressUpdateNotification")
     static let photoImageUpdate = Notification.Name("AXPhotoImageUpdateNotification")
 }
+
+

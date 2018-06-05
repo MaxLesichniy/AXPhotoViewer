@@ -6,6 +6,10 @@
 //  Copyright © 2017 Alex Hill. All rights reserved.
 //
 
+@objc(AXItemType) public enum ItemType: Int {
+    case image, video
+}
+
 @objc(AXPhotoProtocol) public protocol PhotoProtocol: AnyObject, NSObjectProtocol {
     
     /// The attributed title of the image that will be displayed in the photo's `captionView`.
@@ -26,5 +30,7 @@
     
     /// The URL of the image.
     @objc var url: URL? { get }
+    
+    @objc var type: ItemType { get }
     
 }

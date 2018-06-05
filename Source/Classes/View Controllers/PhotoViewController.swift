@@ -24,6 +24,8 @@ import FLAnimatedImage
     
     fileprivate var photo: PhotoProtocol?
     fileprivate weak var notificationCenter: NotificationCenter?
+    fileprivate(set) var player = Player()
+    
     
     @objc public init(loadingView: LoadingViewProtocol, notificationCenter: NotificationCenter) {
         self.loadingView = loadingView
@@ -40,6 +42,8 @@ import FLAnimatedImage
                                        selector: #selector(photoImageDidUpdate(_:)),
                                        name: .photoImageUpdate,
                                        object: nil)
+        
+
     }
     
     @objc public required init?(coder aDecoder: NSCoder) {
@@ -57,11 +61,26 @@ import FLAnimatedImage
     open override func viewDidLoad() {
         super.viewDidLoad()
         
+        self.player.autoplay = false
+//        self.player.playerDelegate = self
+//        self.player.playbackDelegate = self
+        self.player.view.frame = self.view.bounds
+        
+        self.addChildViewController(self.player)
+        self.view.addSubview(self.player.view)
+        self.player.didMove(toParentViewController: self)
+        
         self.zoomingImageView.zoomScaleDelegate = self
         
         if let loadingView = self.loadingView as? UIView {
             self.view.addSubview(loadingView)
         }
+    }
+    
+    open override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        self.player.playFromBeginning()
     }
     
     open override func viewWillLayoutSubviews() {
@@ -77,6 +96,8 @@ import FLAnimatedImage
         (self.loadingView as? UIView)?.frame = CGRect(origin: CGPoint(x: floor((self.view.bounds.size.width - loadingViewSize.width) / 2),
                                                                       y: floor((self.view.bounds.size.height - loadingViewSize.height) / 2)),
                                                       size: loadingViewSize)
+        
+        self.player.view.frame = view.bounds
     }
     
     @objc public func applyPhoto(_ photo: PhotoProtocol) {
@@ -90,37 +111,42 @@ import FLAnimatedImage
         
         self.loadingView?.removeError()
         
-        switch photo.ax_loadingState {
-        case .loading, .notLoaded, .loadingCancelled:
-            resetImageView()
-            self.loadingView?.startLoading(initialProgress: photo.ax_progress)
-        case .loadingFailed:
-            resetImageView()
-            let error = photo.ax_error ?? NSError()
-            self.loadingView?.showError(error, retryHandler: { [weak self] in
-                guard let uSelf = self else {
+        if photo.type == .video {
+            self.player.url = photo.url
+            self.player.view.isHidden = false
+        } else {
+            switch photo.ax_loadingState {
+            case .loading, .notLoaded, .loadingCancelled:
+                resetImageView()
+                self.loadingView?.startLoading(initialProgress: photo.ax_progress)
+            case .loadingFailed:
+                resetImageView()
+                let error = photo.ax_error ?? NSError()
+                self.loadingView?.showError(error, retryHandler: { [weak self] in
+                    guard let uSelf = self else {
+                        return
+                    }
+                    
+                    self?.delegate?.photoViewController(uSelf, retryDownloadFor: photo)
+                    self?.loadingView?.removeError()
+                    self?.loadingView?.startLoading(initialProgress: photo.ax_progress)
+                })
+            case .loaded:
+                guard photo.image != nil || photo.ax_animatedImage != nil else {
+                    assertionFailure("Must provide valid `UIImage` in \(#function)")
                     return
                 }
                 
-                self?.delegate?.photoViewController(uSelf, retryDownloadFor: photo)
-                self?.loadingView?.removeError()
-                self?.loadingView?.startLoading(initialProgress: photo.ax_progress)
-            })
-        case .loaded:
-            guard photo.image != nil || photo.ax_animatedImage != nil else {
-                assertionFailure("Must provide valid `UIImage` in \(#function)")
-                return
-            }
-            
-            self.loadingView?.stopLoading()
-            
-            if let animatedImage = photo.ax_animatedImage {
-                self.zoomingImageView.animatedImage = animatedImage
-            } else if let image = photo.image {
-                self.zoomingImageView.image = image
+                self.loadingView?.stopLoading()
+                
+                if let animatedImage = photo.ax_animatedImage {
+                    self.zoomingImageView.animatedImage = animatedImage
+                } else if let image = photo.image {
+                    self.zoomingImageView.image = image
+                }
             }
         }
-        
+    
         self.view.setNeedsLayout()
     }
     
@@ -128,6 +154,8 @@ import FLAnimatedImage
     func prepareForReuse() {
         self.zoomingImageView.image = nil
         self.zoomingImageView.animatedImage = nil
+        self.player.view.isHidden = true
+        self.player.url = nil
     }
     
     // MARK: - ZoomingImageViewDelegate
@@ -159,6 +187,10 @@ import FLAnimatedImage
         }
         
         guard photo === self.photo, let userInfo = notification.userInfo else {
+            return
+        }
+        
+        guard photo.type == .image else {
             return
         }
         
@@ -196,3 +228,5 @@ import FLAnimatedImage
                              imageSize: CGSize) -> CGFloat
     
 }
+
+

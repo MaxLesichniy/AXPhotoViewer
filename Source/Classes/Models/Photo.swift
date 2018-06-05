@@ -22,6 +22,23 @@
         self.imageData = imageData
         self.image = image
         self.url = url
+        self.type = .image
+        
+        super.init()
+    }
+    
+    @objc public init(attributedTitle: NSAttributedString? = nil,
+                      attributedDescription: NSAttributedString? = nil,
+                      attributedCredit: NSAttributedString? = nil,
+                      image: UIImage? = nil,
+                      videoUrl: URL? = nil) {
+        
+        self.attributedTitle = attributedTitle
+        self.attributedDescription = attributedDescription
+        self.attributedCredit = attributedCredit
+        self.image = image
+        self.url = videoUrl
+        self.type = .video
         
         super.init()
     }
@@ -45,4 +62,6 @@
     /// The URL of the image. If present, this value will be passed to a `NetworkIntegration` to be downloaded.
     @objc public var url: URL?
     
+    @objc public var type: ItemType
+
 }

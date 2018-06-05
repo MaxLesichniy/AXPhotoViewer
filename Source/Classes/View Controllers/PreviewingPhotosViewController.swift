@@ -38,17 +38,19 @@ import MobileCoreServices
     
     // MARK: - Initialization
     #if AX_SDWEBIMAGE_SUPPORT || AX_PINREMOTEIMAGE_SUPPORT || AX_AFNETWORKING_SUPPORT || AX_KINGFISHER_SUPPORT || AX_LITE_SUPPORT
-    @objc public init(dataSource: PhotosDataSource) {
+    @objc public init(dataSource: PhotosDataSource, initialImage: UIImage?) {
         super.init(nibName: nil, bundle: nil)
-        self.commonInit(dataSource: dataSource)
+        self.commonInit(dataSource: dataSource, initialImage: initialImage)
     }
     #else
     @objc public init(dataSource: PhotosDataSource,
-                      networkIntegration: NetworkIntegrationProtocol) {
+                      networkIntegration: NetworkIntegrationProtocol,
+                      initialImage: UIImage?) {
     
         super.init(nibName: nil, bundle: nil)
         self.commonInit(dataSource: dataSource,
-                        networkIntegration: networkIntegration)
+                        networkIntegration: networkIntegration,
+                        initialImage: initialImage)
     }
     #endif
     
@@ -57,7 +59,10 @@ import MobileCoreServices
     }
     
     fileprivate func commonInit(dataSource: PhotosDataSource,
-                                networkIntegration: NetworkIntegrationProtocol? = nil) {
+                                networkIntegration: NetworkIntegrationProtocol? = nil,
+                                initialImage: UIImage?) {
+        
+        imageView.image = initialImage
         
         self.dataSource = dataSource
 
@@ -76,6 +81,8 @@ import MobileCoreServices
             #else
                 fatalError("Must be using one of the network integration subspecs if no `NetworkIntegration` is going to be provided.")
             #endif
+        } else {
+            uNetworkIntegration = networkIntegration!
         }
         
         self.networkIntegration = uNetworkIntegration

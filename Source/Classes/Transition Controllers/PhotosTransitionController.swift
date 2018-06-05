@@ -46,6 +46,12 @@ import FLAnimatedImage
     /// but our pan gesture recognizer is receiving touch events. Processed as soon as the interactive dismissal has been set up.
     fileprivate var pendingAnimations = [() -> Void]()
     
+    fileprivate var backgroundView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black
+        return view
+    }()
+    
     // Interactive dismissal transition tracking
     fileprivate var dismissalPercent: CGFloat = 0
     fileprivate var directionalDismissalPercent: CGFloat = 0
@@ -133,6 +139,11 @@ import FLAnimatedImage
         
         to.view.alpha = 0
         to.view.frame = transitionContext.finalFrame(for: to)
+        
+        backgroundView.alpha = 0
+        backgroundView.frame = transitionContext.containerView.bounds
+        transitionContext.containerView.addSubview(backgroundView)
+        
         transitionContext.containerView.addSubview(to.view)
         
         transitionContext.containerView.layoutIfNeeded()
@@ -182,7 +193,8 @@ import FLAnimatedImage
         }
         
         let fadeAnimations = {
-            from.view.alpha = 0
+            self.backgroundView.alpha = 1
+//            from.view.alpha = 0
         }
         
         UIView.animate(withDuration: self.transitionDuration(using: transitionContext),
