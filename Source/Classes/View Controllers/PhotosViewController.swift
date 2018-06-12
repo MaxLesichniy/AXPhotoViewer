@@ -681,6 +681,11 @@ import CoreMedia
         photoViewController.pageIndex = pageIndex
         photoViewController.applyPhoto(photo)
         
+        if pageIndex == self.dataSource.initialPhotoIndex, photo.ax_loadingState != .loaded,
+            photo.image == nil, photo.imageData == nil {
+            photoViewController.zoomingImageView.image = self.dataSource.initialImage
+        }
+        
         let insertionIndex = self.orderedViewControllers.insertionIndex(of: photoViewController, isOrderedBefore: { $0.pageIndex < $1.pageIndex })
         if !insertionIndex.alreadyExists {
             self.orderedViewControllers.insert(photoViewController, at: insertionIndex.index)

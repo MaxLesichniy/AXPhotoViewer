@@ -26,6 +26,8 @@
     // The initial photo index to display upon presentation.
     @objc fileprivate(set) var initialPhotoIndex: Int = 0
     
+    @objc var initialImage: UIImage?
+    
     // MARK: - Initialization
     @objc public init(photos: [PhotoProtocol], initialPhotoIndex: Int, prefetchBehavior: PhotosPrefetchBehavior) {
         self.photos = photos

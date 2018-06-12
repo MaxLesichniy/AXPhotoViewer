@@ -40,17 +40,18 @@ import MobileCoreServices
     #if AX_SDWEBIMAGE_SUPPORT || AX_PINREMOTEIMAGE_SUPPORT || AX_AFNETWORKING_SUPPORT || AX_KINGFISHER_SUPPORT || AX_LITE_SUPPORT
     @objc public init(dataSource: PhotosDataSource, initialImage: UIImage?) {
         super.init(nibName: nil, bundle: nil)
+        self.dataSource.initialImage = initialImage
         self.commonInit(dataSource: dataSource, initialImage: initialImage)
     }
     #else
     @objc public init(dataSource: PhotosDataSource,
                       networkIntegration: NetworkIntegrationProtocol,
                       initialImage: UIImage?) {
-    
+        
         super.init(nibName: nil, bundle: nil)
         self.commonInit(dataSource: dataSource,
-                        networkIntegration: networkIntegration,
-                        initialImage: initialImage)
+                        networkIntegration: networkIntegration)
+        self.dataSource.initialImage = initialImage
     }
     #endif
     
@@ -59,10 +60,7 @@ import MobileCoreServices
     }
     
     fileprivate func commonInit(dataSource: PhotosDataSource,
-                                networkIntegration: NetworkIntegrationProtocol? = nil,
-                                initialImage: UIImage?) {
-        
-        imageView.image = initialImage
+                                networkIntegration: NetworkIntegrationProtocol? = nil) {
         
         self.dataSource = dataSource
 
@@ -96,6 +94,7 @@ import MobileCoreServices
     open override func viewDidLoad() {
         super.viewDidLoad()
         self.imageView.contentMode = .scaleAspectFit
+        self.imageView.image = self.dataSource.initialImage
         self.configure(with: self.dataSource.initialPhotoIndex)
     }
     
