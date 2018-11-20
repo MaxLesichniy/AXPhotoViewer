@@ -1195,11 +1195,11 @@ import FLAnimatedImage_tvOS
 }
 
 // MARK: - PlaybackControlsView Delegate
-extension PhotosViewController: PlaybackControlsViewDelegate {
+extension AXPhotosViewController: PlaybackControlsViewDelegate {
     
     public func playbackControls(_ view: PlaybackControlsView, didSeek to: TimeInterval) {
         let player = self.currentPhotoViewController?.player
-        let time = CMTimeMakeWithSeconds(to, 60)
+        let time = CMTime(seconds: to, preferredTimescale: 60)
         player?.seek(to: time)
     }
     
@@ -1221,7 +1221,7 @@ extension PhotosViewController: PlaybackControlsViewDelegate {
 }
 
 // MARK: - PlayerPlaybackDelegate
-extension PhotosViewController: PlayerPlaybackDelegate {
+extension AXPhotosViewController: PlayerPlaybackDelegate {
     
     public func playerCurrentTimeDidChange(_ player: Player) {
         overlayView.playbackView.updateCurrentTime(player.currentTime, totalTime: player.maximumDuration)
@@ -1241,7 +1241,7 @@ extension PhotosViewController: PlayerPlaybackDelegate {
 }
 
 // MARK: - PlayerDelegate
-extension PhotosViewController: PlayerDelegate {
+extension AXPhotosViewController: PlayerDelegate {
     
     public func playerReady(_ player: Player) {
         

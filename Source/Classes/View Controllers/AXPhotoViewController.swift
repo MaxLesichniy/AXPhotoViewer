@@ -71,9 +71,9 @@ import FLAnimatedImage_tvOS
 //        self.player.playbackDelegate = self
         self.player.view.frame = self.view.bounds
         
-        self.addChildViewController(self.player)
+        self.addChild(self.player)
         self.view.addSubview(self.player.view)
-        self.player.didMove(toParentViewController: self)
+        self.player.didMove(toParent: self)
         
         self.zoomingImageView.zoomScaleDelegate = self
         

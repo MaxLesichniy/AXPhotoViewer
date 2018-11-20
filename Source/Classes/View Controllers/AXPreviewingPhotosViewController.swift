@@ -41,7 +41,7 @@ import FLAnimatedImage
     @objc public init(dataSource: AXPhotosDataSource, initialImage: UIImage?) {
         super.init(nibName: nil, bundle: nil)
         self.dataSource.initialImage = initialImage
-        self.commonInit(dataSource: dataSource, initialImage: initialImage)
+        self.commonInit(dataSource: dataSource)
     }
 
     @objc public init(dataSource: AXPhotosDataSource,
@@ -78,8 +78,6 @@ import FLAnimatedImage
             #else
             networkIntegration = SimpleNetworkIntegration()
             #endif
-        } else {
-            uNetworkIntegration = networkIntegration!
         }
         
         self.networkIntegration = networkIntegration

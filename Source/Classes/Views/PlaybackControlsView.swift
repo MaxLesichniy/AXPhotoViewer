@@ -90,7 +90,7 @@ public class PlaybackControlsView: UIToolbar {
     fileprivate func updateBarButtomItems() {
         let fixedSpace = UIBarButtonItem(barButtonSystemItem: .fixedSpace, target: nil, action: nil)
         let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
-        fixedSpace.width = Constants.overlayBarButtonItemSpacing
+        fixedSpace.width = AXConstants.overlayBarButtonItemSpacing
         let firstItem: UIBarButtonItem
         if isPlaying {
             firstItem = pauseButton
