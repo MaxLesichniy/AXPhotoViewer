@@ -6,18 +6,26 @@
 //  Copyright © 2017 Alex Hill. All rights reserved.
 //
 
+#if canImport(AFNetworking)
 import AFNetworking
 import ImageIO
 
-class AFNetworkingIntegration: NSObject, NetworkIntegrationProtocol {
+class AFNetworkingIntegration: NSObject, AXNetworkIntegrationProtocol {
     
-    weak public var delegate: NetworkIntegrationDelegate?
+    weak public var delegate: AXNetworkIntegrationDelegate?
     
-    fileprivate var downloadTasks = NSMapTable<PhotoProtocol, URLSessionDataTask>(keyOptions: .strongMemory, valueOptions: .strongMemory)
+    fileprivate var downloadTasks = NSMapTable<AXPhotoProtocol, URLSessionDataTask>(keyOptions: .strongMemory, valueOptions: .strongMemory)
     
-    public func loadPhoto(_ photo: PhotoProtocol) {
+    public func loadPhoto(_ photo: AXPhotoProtocol) {
         if photo.imageData != nil || photo.image != nil {
-            self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+            AXDispatchUtils.executeInBackground { [weak self] in
+                guard let `self` = self else {
+                    return
+                }
+                
+                self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+            }
+            return
         }
         
         guard let url = photo.url else {
@@ -25,46 +33,89 @@ class AFNetworkingIntegration: NSObject, NetworkIntegrationProtocol {
         }
         
         let progress: (_ progress: Progress) -> Void = { [weak self] (progress) in
-            guard let uSelf = self else {
+            guard let `self` = self else {
                 return
             }
             
-            uSelf.delegate?.networkIntegration?(uSelf, didUpdateLoadingProgress: CGFloat(progress.fractionCompleted), for: photo)
+            AXDispatchUtils.executeInBackground { [weak self] in
+                guard let `self` = self else {
+                    return
+                }
+                
+                self.delegate?.networkIntegration?(self, didUpdateLoadingProgress: CGFloat(progress.fractionCompleted), for: photo)
+            }
         }
 
         let success: (_ dataTask: URLSessionDataTask, _ responseObject: Any?) -> Void = { [weak self] (dataTask, responseObject) in
-            guard let uSelf = self else {
+            guard let `self` = self else {
                 return
             }
             
-            uSelf.downloadTasks.removeObject(forKey: photo)
+            self.downloadTasks.removeObject(forKey: photo)
             
             if let responseGIFData = responseObject as? Data {
                 photo.imageData = responseGIFData
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
+                    }
+                    
+                    self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+                }
             } else if let responseImage = responseObject as? UIImage {
                 photo.image = responseImage
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
+                    }
+                    
+                    self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+                }
+            } else {
+                let error = NSError(
+                    domain: AXNetworkIntegrationErrorDomain,
+                    code: AXNetworkIntegrationFailedToLoadErrorCode,
+                    userInfo: nil
+                )
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
+                    }
+                    
+                    self.delegate?.networkIntegration(self, loadDidFailWith: error, for: photo)
+                }
             }
-            
-            uSelf.delegate?.networkIntegration(uSelf, loadDidFinishWith: photo)
         }
         
         let failure: (_ dataTask: URLSessionDataTask?, _ error: Error) -> Void = { [weak self] (dataTask, error) in
-            guard let uSelf = self else {
+            guard let `self` = self else {
                 return
             }
             
-            uSelf.downloadTasks.removeObject(forKey: photo)
-            uSelf.delegate?.networkIntegration(uSelf, loadDidFailWith: error, for: photo)
+            self.downloadTasks.removeObject(forKey: photo)
+            
+            let error = NSError(
+                domain: AXNetworkIntegrationErrorDomain,
+                code: AXNetworkIntegrationFailedToLoadErrorCode,
+                userInfo: nil
+            )
+            AXDispatchUtils.executeInBackground { [weak self] in
+                guard let `self` = self else {
+                    return
+                }
+                
+                self.delegate?.networkIntegration(self, loadDidFailWith: error, for: photo)
+            }
         }
         
-        guard let dataTask = AXAFHTTPSessionManager.shared.get(url.absoluteString, parameters: nil, progress: progress, success: success, failure: failure) else {
+        guard let dataTask = AXHTTPSessionManager.shared.get(url.absoluteString, parameters: nil, progress: progress, success: success, failure: failure) else {
             return
         }
         
         self.downloadTasks.setObject(dataTask, forKey: photo)
     }
     
-    func cancelLoad(for photo: PhotoProtocol) {
+    func cancelLoad(for photo: AXPhotoProtocol) {
         guard let dataTask = self.downloadTasks.object(forKey: photo) else {
             return
         }
@@ -86,13 +137,13 @@ class AFNetworkingIntegration: NSObject, NetworkIntegrationProtocol {
 }
 
 /// An `AFHTTPSesssionManager` with our subclassed `AXAFImageResponseSerializer`.
-class AXAFHTTPSessionManager: AFHTTPSessionManager {
+class AXHTTPSessionManager: AFHTTPSessionManager {
     
-    static let shared = AXAFHTTPSessionManager()
+    static let shared = AXHTTPSessionManager()
     
     init() {
         super.init(baseURL: nil, sessionConfiguration: .default)
-        self.responseSerializer = AXAFImageResponseSerializer()
+        self.responseSerializer = AXImageResponseSerializer()
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -102,14 +153,15 @@ class AXAFHTTPSessionManager: AFHTTPSessionManager {
 }
 
 /// A subclassed `AFImageResponseSerializer` that returns GIF data if it exists.
-class AXAFImageResponseSerializer: AFImageResponseSerializer {
+class AXImageResponseSerializer: AFImageResponseSerializer {
     
     override func responseObject(for response: URLResponse?, data: Data?, error: NSErrorPointer) -> Any? {
-        if let uData = data, uData.containsGIF() {
-            return uData
+        if let `data` = data, data.containsGIF() {
+            return data
         }
         
         return super.responseObject(for: response, data: data, error: error)
     }
     
 }
+#endif

@@ -6,17 +6,25 @@
 //  Copyright © 2017 Alex Hill. All rights reserved.
 //
 
+#if canImport(SDWebImage)
 import SDWebImage
 
-class SDWebImageIntegration: NSObject, NetworkIntegrationProtocol {
+class SDWebImageIntegration: NSObject, AXNetworkIntegrationProtocol {
     
-    weak var delegate: NetworkIntegrationDelegate?
+    weak var delegate: AXNetworkIntegrationDelegate?
     
-    fileprivate var downloadOperations = NSMapTable<PhotoProtocol, SDWebImageOperation>(keyOptions: .strongMemory, valueOptions: .strongMemory)
+    fileprivate var downloadOperations = NSMapTable<AXPhotoProtocol, SDWebImageOperation>(keyOptions: .strongMemory, valueOptions: .strongMemory)
     
-    func loadPhoto(_ photo: PhotoProtocol) {
+    func loadPhoto(_ photo: AXPhotoProtocol) {
         if photo.imageData != nil || photo.image != nil {
-            self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+            AXDispatchUtils.executeInBackground { [weak self] in
+                guard let `self` = self else {
+                    return
+                }
+                
+                self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+            }
+            return
         }
         
         guard let url = photo.url else {
@@ -24,33 +32,57 @@ class SDWebImageIntegration: NSObject, NetworkIntegrationProtocol {
         }
                 
         let progress: SDWebImageDownloaderProgressBlock = { [weak self] (receivedSize, expectedSize, targetURL) in
-            guard let uSelf = self else {
+            guard let `self` = self else {
                 return
             }
             
-            uSelf.delegate?.networkIntegration?(uSelf, didUpdateLoadingProgress: CGFloat(receivedSize) / CGFloat(expectedSize), for: photo)
+            AXDispatchUtils.executeInBackground { [weak self] in
+                guard let `self` = self else {
+                    return
+                }
+             
+                self.delegate?.networkIntegration?(self, didUpdateLoadingProgress: CGFloat(receivedSize) / CGFloat(expectedSize), for: photo)
+            }
         }
         
         let completion: SDInternalCompletionBlock = { [weak self] (image, data, error, cacheType, finished, imageURL) in
-            guard let uSelf = self else {
+            guard let `self` = self else {
                 return
             }
             
-            self?.downloadOperations.removeObject(forKey: photo)
+            self.downloadOperations.removeObject(forKey: photo)
             
-            if let error = error {
-                uSelf.delegate?.networkIntegration(uSelf, loadDidFailWith: error, for: photo)
-            } else {
-                if let image = image {
-                    if image.isGIF() {
-                        photo.imageData = data
+            if let data = data, data.containsGIF() {
+                photo.imageData = data
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
                     }
-                    photo.image = image
-                } else if let imageData = data {
-                    photo.imageData = imageData
+                    
+                    self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
                 }
-                
-                uSelf.delegate?.networkIntegration(uSelf, loadDidFinishWith: photo)
+            } else if let image = image {
+                photo.image = image
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
+                    }
+                    
+                    self.delegate?.networkIntegration(self, loadDidFinishWith: photo)
+                }
+            } else {
+                let error = NSError(
+                    domain: AXNetworkIntegrationErrorDomain,
+                    code: AXNetworkIntegrationFailedToLoadErrorCode,
+                    userInfo: nil
+                )
+                AXDispatchUtils.executeInBackground { [weak self] in
+                    guard let `self` = self else {
+                        return
+                    }
+                 
+                    self.delegate?.networkIntegration(self, loadDidFailWith: error, for: photo)
+                }
             }
         }
         
@@ -61,7 +93,7 @@ class SDWebImageIntegration: NSObject, NetworkIntegrationProtocol {
         self.downloadOperations.setObject(operation, forKey: photo)
     }
     
-    func cancelLoad(for photo: PhotoProtocol) {
+    func cancelLoad(for photo: AXPhotoProtocol) {
         guard let downloadOperation = self.downloadOperations.object(forKey: photo) else {
             return
         }
@@ -80,3 +112,4 @@ class SDWebImageIntegration: NSObject, NetworkIntegrationProtocol {
     }
     
 }
+#endif

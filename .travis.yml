@@ -1,8 +1,6 @@
 language: swift
-osx_image: xcode9
-xcode_workspace: Example/AXPhotoViewerExample.xcworkspace
-xcode_scheme: AXPhotoViewerExample
+osx_image: xcode10
 
-before_install: pod install --repo-update --project-directory=Example
-script: xcodebuild -workspace Example/AXPhotoViewerExample.xcworkspace -scheme AXPhotoViewerExample build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO PROVISIONING_PROFILE="" | xcpretty && exit ${PIPESTATUS[0]}
+before_script: pod repo update
+script: travis_wait pod lib lint --allow-warnings
 

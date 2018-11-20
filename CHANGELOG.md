@@ -1,3 +1,41 @@
+# 1.6.1
+- [**FIXED**] When captionView layout occurred more than once while animation was occurring, new captions would be applied mid animation
+
+# 1.6.0
+- Requires Swift 4.2
+- [**FIXED**] Navbar would behave erratically during dismissal if changing the bar button items to anything other than the default
+- [**FIXED**] Custom font size would be overwritten by AXCaptionView
+- [**FIXED**] NSParagraphStyle alignment would have no effect on caption labels
+
+# 1.5.0
+- Requires Swift 4.1
+- [**NEW**] Support for new network integration - Nuke. Required iOS/tvOS 9.0 or higher.
+- [**NEW**] Support for UIContentMode on reference image views during transitions. The transition animator will adopt the content mode of the startingView and endingView.
+- [**NEW**] Support for spring damping ratio in AXTransitionInfo. Control the springy-ness of your transitions by adjusting this value!
+- [**NEW**] Supply a custom fade backdrop view if desired. This is defined on the AXTransitionInfo object and will be used during presentation/dismissal transitions. (#36 - thanks @ashitikov!)
+- [**FIXED**] Safe area insets being automatically applied to the scrollView during image zoom.
+- [**FIXED**] Network integrations will now always return on a background thread. This was a problem for synchronous cache fetches (memory) that were made on the main thread.
+
+# 1.4.3
+- [**NEW**] Delegate method: `photosViewController(_:overlayView:visibilityWillChange:)` in order to coordinate overlayView visiblity changes with other animations
+
+# 1.4.2
+- Revert to Swift 4.0
+
+# 1.4.1
+- Small changes to insets in AXCaptionView on tvOS
+- Removes invalid initializer on AXTransitionInfo on tvOS
+
+# 1.4.0
+- **[NEW]** tvOS Support has been added
+- **[NEW]** Swift 4.1 usage requires **Xcode 9.3**
+- **[NEW]** All classes are now namespaced with 'AX' in order to be more subclass-friendly
+- **[NEW]** Delegate methods: `photosViewControllerWillDismiss:` and `photosViewControllerDidDismiss:`, which are called for both interactive and non-interactive dismissals [#29](https://github.com/alexhillc/AXPhotoViewer/issues/29)
+- **[NEW]** `navigateToPhotoIndex(_:animated:)` to allow developers to navigate between photos programmatically
+- **[FIXED]** Localization is now much easier for the `internalTitle` property [#31](https://github.com/alexhillc/AXPhotoViewer/issues/31)
+- **[FIXED]** Example project crashes when loading local assets [#25](https://github.com/alexhillc/AXPhotoViewer/issues/25)
+- **[CHANGED]** The library now depends on Cocoapods a lot less, opening up the possibility for Carthage support
+
 # 1.3.6
 - **[FIXED]** 'CaptionView' sometimes improperly sizing its labels
 

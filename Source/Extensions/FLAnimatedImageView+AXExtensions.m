@@ -6,10 +6,14 @@
 //  Copyright © 2017 Alex Hill. All rights reserved.
 //
 
+#if TARGET_OS_IOS
 @import FLAnimatedImage;
+#elif TARGET_OS_TV
+@import FLAnimatedImage_tvOS;
+#endif
 
 #import "FLAnimatedImageView+AXExtensions.h"
-#import <AXPhotoViewer/AXPhotoViewer-Swift.h>
+#import "UIImageView+AXExtensions.h"
 
 @interface FLAnimatedImageView ()
 
@@ -37,8 +41,8 @@
 
 @implementation FLAnimatedImageView (AXExtensions)
 
-- (id)copyWithZone:(struct _NSZone *)zone {
-    FLAnimatedImageView *imageView = [super copyWithZone:zone];
+- (UIImageView *)ax_copy {
+    FLAnimatedImageView *imageView = [super ax_copy];
     imageView.animatedImage = self.animatedImage;
     imageView.currentFrame = self.currentFrame;
     imageView.currentFrameIndex = self.currentFrameIndex;
